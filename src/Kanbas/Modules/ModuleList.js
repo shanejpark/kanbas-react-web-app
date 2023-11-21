@@ -5,20 +5,42 @@ import {
   faPlus,
   faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   addModule,
   deleteModule,
   updateModule,
   setModule,
+  setModules,
 } from "./modulesReducer";
+import * as client from "./client";
 
 function ModuleList() {
   const modules = useSelector((state) => state.modulesReducer.modules);
   const module = useSelector((state) => state.modulesReducer.module);
   const dispatch = useDispatch();
   const { courseId } = useParams();
+  const handleAddModule = () => {
+    client.createModule(courseId, module).then((module) => {
+      dispatch(addModule(module));
+    });
+  };
+  const handleDeleteModule = (moduleId) => {
+    client.deleteModule(moduleId).then((status) => {
+      dispatch(deleteModule(moduleId));
+    });
+  };
+  const handleUpdateModule = async () => {
+    const status = await client.updateModule(module);
+    dispatch(updateModule(module));
+  };
+
+  useEffect(() => {
+    client
+      .findModulesForCourse(courseId)
+      .then((modules) => dispatch(setModules(modules)));
+  }, [courseId]);
 
   return (
     <div className="list-group">
@@ -38,13 +60,13 @@ function ModuleList() {
           className="form-control mt-2"
         />
         <button
-          onClick={() => dispatch(addModule({ ...module, course: courseId }))}
+          onClick={() => handleAddModule()}
           className="btn btn-primary mt-2"
         >
           Add
         </button>
         <button
-          onClick={() => dispatch(updateModule(module))}
+          onClick={() => handleUpdateModule(module)}
           className="btn btn-primary ms-2 mt-2"
         >
           Update
@@ -61,7 +83,7 @@ function ModuleList() {
             Edit
           </button>
           <button
-            onClick={() => dispatch(deleteModule(module._id))}
+            onClick={() => handleDeleteModule(module._id)}
             className="float-end btn btn-sm btn-danger me-1 ms-2"
           >
             Delete
